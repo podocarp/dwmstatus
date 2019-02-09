@@ -219,7 +219,7 @@ int main(void)
             t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
             bat = getbattery("/sys/class/power_supply/BAT0");
             bat1 = getbattery("/sys/class/power_supply/BAT1");
-            time = mktimes("%a %d %b %Y %H:%M", zone);
+            time = mktimes("%a %d %b %Y  %H:%M", zone);
             cnt = 0;
         }
 
