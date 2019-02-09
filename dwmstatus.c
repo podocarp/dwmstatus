@@ -209,14 +209,14 @@ int main(void)
         fprintf(stderr, "dwmstatus: cannot open display.\n");
         return 1;
     }
-    # define UNITS 10
-    # define SLOW_INTERVAL_UNITS 6
+    # define UNITS 3
+    # define SLOW_INTERVAL_UNITS 10
     for (int cnt = SLOW_INTERVAL_UNITS;; sleep(UNITS), cnt++) {
         volume = getvol(alsahandle);
-        t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
 
         // once a minute
         if (cnt > SLOW_INTERVAL_UNITS - 1) {
+            t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
             bat = getbattery("/sys/class/power_supply/BAT0");
             bat1 = getbattery("/sys/class/power_supply/BAT1");
             time = mktimes("%a %d %b %Y %H:%M", zone);
@@ -230,8 +230,8 @@ int main(void)
             free(bat);
             free(bat1);
             free(time);
+            free(t0);
         }
-        free(t0);
         free(volume);
         free(status);
     }
