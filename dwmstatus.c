@@ -4,16 +4,16 @@
  */
 
 #define _BSD_SOURCE
-#include <unistd.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdarg.h>
 #include <string.h>
 #include <strings.h>
 #include <sys/time.h>
-#include <time.h>
 #include <sys/types.h>
 #include <sys/wait.h>
+#include <time.h>
+#include <unistd.h>
 
 #include <X11/Xlib.h>
 #include <alsa/asoundlib.h>
@@ -166,27 +166,25 @@ char* gettemperature(char* base, char* sensor)
     return smprintf("%02.0f°C", atof(co) / 1000);
 }
 
-snd_mixer_t* initalsa()
+snd_mixer_elem_t* initalsa()
 {
     snd_mixer_t* h;
     snd_mixer_open(&h, 0);
     snd_mixer_attach(h, "default");
     snd_mixer_selem_register(h, NULL, NULL);
     snd_mixer_load(h);
-
-    return h;
-}
-
-char* getvol(snd_mixer_t* h)
-{
-    long vol;
     snd_mixer_selem_id_t* sid;
     snd_mixer_selem_id_alloca(&sid);
     snd_mixer_selem_id_set_index(sid, 0);
     snd_mixer_selem_id_set_name(sid, "Master");
     snd_mixer_elem_t* elem = snd_mixer_find_selem(h, sid);
-    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &vol);
+    return elem;
+}
 
+char* getvol(snd_mixer_elem_t* elem)
+{
+    long vol;
+    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &vol);
     char* glyph = (vol == 0) ? "婢"
                              : (vol < 33) ? ""
                                           : (vol < 66) ? "" : " ";
@@ -195,8 +193,7 @@ char* getvol(snd_mixer_t* h)
 
 int main(void)
 {
-    printf("ASDasda");
-    snd_mixer_t* alsahandle = initalsa();
+    snd_mixer_elem_t* alsaelem = initalsa();
 
     char* status;
     char* time;
@@ -209,29 +206,20 @@ int main(void)
         fprintf(stderr, "dwmstatus: cannot open display.\n");
         return 1;
     }
-    # define UNITS 3
-    # define SLOW_INTERVAL_UNITS 10
-    for (int cnt = SLOW_INTERVAL_UNITS;; sleep(UNITS), cnt++) {
-        volume = getvol(alsahandle);
-
-        // once a minute
-        if (cnt > SLOW_INTERVAL_UNITS - 1) {
-            t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
-            bat = getbattery("/sys/class/power_supply/BAT0");
-            bat1 = getbattery("/sys/class/power_supply/BAT1");
-            time = mktimes("%a %d %b %Y  %H:%M", zone);
-            cnt = 0;
-        }
+    for (;; sleep(30)) {
+        volume = getvol(alsaelem);
+        t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
+        bat = getbattery("/sys/class/power_supply/BAT0");
+        bat1 = getbattery("/sys/class/power_supply/BAT1");
+        time = mktimes("%a %d %b %Y  %H:%M", zone);
 
         status = smprintf("  %s    %s %s   %s    %s ",
             t0, bat, bat1, volume, time);
         setstatus(status);
-        if (cnt > SLOW_INTERVAL_UNITS - 2) {
-            free(bat);
-            free(bat1);
-            free(time);
-            free(t0);
-        }
+        free(bat);
+        free(bat1);
+        free(time);
+        free(t0);
         free(volume);
         free(status);
     }
