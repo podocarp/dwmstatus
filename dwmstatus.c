@@ -193,34 +193,33 @@ char* getvol(snd_mixer_elem_t* elem)
 
 int main(void)
 {
-    snd_mixer_elem_t* alsaelem = initalsa();
+    //snd_mixer_elem_t* alsaelem = initalsa();
 
     char* status;
     char* time;
     char* bat;
     char* bat1;
     char* t0;
-    char* volume;
+    //char* volume;
 
     if (!(dpy = XOpenDisplay(NULL))) {
         fprintf(stderr, "dwmstatus: cannot open display.\n");
         return 1;
     }
     for (;; sleep(30)) {
-        volume = getvol(alsaelem);
+        //volume = getvol(alsaelem);
         t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
         bat = getbattery("/sys/class/power_supply/BAT0");
         bat1 = getbattery("/sys/class/power_supply/BAT1");
         time = mktimes("%a %d %b %Y  %H:%M", zone);
 
-        status = smprintf("  %s    %s %s   %s    %s ",
-            t0, bat, bat1, volume, time);
+        status = smprintf(" %s   %s %s   %s ",
+            t0, bat, bat1, time);
         setstatus(status);
         free(bat);
         free(bat1);
         free(time);
         free(t0);
-        free(volume);
         free(status);
     }
 
