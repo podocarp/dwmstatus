@@ -109,36 +109,27 @@ char* readfile(char* base, char* file)
 char* getbattery(char* base)
 {
     char *co, status;
-    int descap, remcap;
-
+    float descap = -1, remcap = -1, power = 0;
+    
     descap = -1;
     remcap = -1;
 
-    co = readfile(base, "present");
+    co = readfile(base, "energy_full");
     if (co == NULL)
         return smprintf("");
-    if (co[0] != '1') {
-        free(co);
-        return smprintf("not present");
-    }
+    sscanf(co, "%f", &descap);
     free(co);
 
-    co = readfile(base, "charge_full_design");
-    if (co == NULL) {
-        co = readfile(base, "energy_full_design");
-        if (co == NULL)
-            return smprintf("");
-    }
-    sscanf(co, "%d", &descap);
+    co = readfile(base, "energy_now");
+    if (co == NULL)
+        return smprintf("");
+    sscanf(co, "%f", &remcap);
     free(co);
 
-    co = readfile(base, "charge_now");
-    if (co == NULL) {
-        co = readfile(base, "energy_now");
-        if (co == NULL)
-            return smprintf("");
-    }
-    sscanf(co, "%d", &remcap);
+    co = readfile(base, "power_now");
+    if (co == NULL)
+        return smprintf("");
+    sscanf(co, "%f", &power);
     free(co);
 
     co = readfile(base, "status");
@@ -151,9 +142,13 @@ char* getbattery(char* base)
     }
 
     if (remcap < 0 || descap < 0)
-        return smprintf("invalid");
-
-    return smprintf("%.0f%%%c", ((float)remcap / (float)descap) * 100, status);
+        return smprintf("?");
+    
+    if (power == 0)
+        return smprintf("%.0f%%%c", ((float)remcap / (float)descap) * 100, status);
+    else {
+        return smprintf("%.0f%%%c (%.2f)", ((float)remcap / (float)descap) * 100, status, remcap / power);
+    }
 }
 
 char* gettemperature(char* base, char* sensor)
@@ -186,8 +181,8 @@ char* getvol(snd_mixer_elem_t* elem)
     long vol;
     snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &vol);
     char* glyph = (vol == 0) ? "婢"
-                             : (vol < 33) ? ""
-                                          : (vol < 66) ? "" : " ";
+        : (vol < 33) ? ""
+        : (vol < 66) ? "" : " ";
     return smprintf("%s %ld%%", glyph, vol);
 }
 
@@ -208,13 +203,13 @@ int main(void)
     }
     for (;; sleep(30)) {
         //volume = getvol(alsaelem);
-        t0 = gettemperature("/sys/devices/virtual/hwmon/hwmon0", "temp1_input");
+        t0 = gettemperature("/sys/class/hwmon/hwmon0", "temp1_input");
         bat = getbattery("/sys/class/power_supply/BAT0");
         bat1 = getbattery("/sys/class/power_supply/BAT1");
         time = mktimes("%a %d %b %Y  %H:%M", zone);
 
         status = smprintf(" %s   %s %s   %s ",
-            t0, bat, bat1, time);
+                t0, bat, bat1, time);
         setstatus(status);
         free(bat);
         free(bat1);
