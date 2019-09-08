@@ -14,10 +14,7 @@
 #include <sys/wait.h>
 #include <time.h>
 #include <unistd.h>
-
 #include <X11/Xlib.h>
-#include <alsa/asoundlib.h>
-#include <alsa/mixer.h>
 
 char* zone = "Asia/Singapore";
 static Display* dpy;
@@ -161,30 +158,30 @@ char* gettemperature(char* base, char* sensor)
     return smprintf("%02.0f°C", atof(co) / 1000);
 }
 
-snd_mixer_elem_t* initalsa()
-{
-    snd_mixer_t* h;
-    snd_mixer_open(&h, 0);
-    snd_mixer_attach(h, "default");
-    snd_mixer_selem_register(h, NULL, NULL);
-    snd_mixer_load(h);
-    snd_mixer_selem_id_t* sid;
-    snd_mixer_selem_id_alloca(&sid);
-    snd_mixer_selem_id_set_index(sid, 0);
-    snd_mixer_selem_id_set_name(sid, "Master");
-    snd_mixer_elem_t* elem = snd_mixer_find_selem(h, sid);
-    return elem;
-}
+//snd_mixer_elem_t* initalsa()
+//{
+//    snd_mixer_t* h;
+//    snd_mixer_open(&h, 0);
+//    snd_mixer_attach(h, "default");
+//    snd_mixer_selem_register(h, NULL, NULL);
+//    snd_mixer_load(h);
+//    snd_mixer_selem_id_t* sid;
+//    snd_mixer_selem_id_alloca(&sid);
+//    snd_mixer_selem_id_set_index(sid, 0);
+//    snd_mixer_selem_id_set_name(sid, "Master");
+//    snd_mixer_elem_t* elem = snd_mixer_find_selem(h, sid);
+//    return elem;
+//}
 
-char* getvol(snd_mixer_elem_t* elem)
-{
-    long vol;
-    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &vol);
-    char* glyph = (vol == 0) ? "婢"
-        : (vol < 33) ? ""
-        : (vol < 66) ? "" : " ";
-    return smprintf("%s %ld%%", glyph, vol);
-}
+//char* getvol(snd_mixer_elem_t* elem)
+//{
+//    long vol;
+//    snd_mixer_selem_get_playback_volume(elem, SND_MIXER_SCHN_FRONT_LEFT, &vol);
+//    char* glyph = (vol == 0) ? "婢"
+//        : (vol < 33) ? ""
+//        : (vol < 66) ? "" : " ";
+//    return smprintf("%s %ld%%", glyph, vol);
+//}
 
 int main(void)
 {
