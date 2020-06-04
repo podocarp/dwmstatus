@@ -176,6 +176,8 @@ int main(void)
     for (;; sleep(30)) {
         //volume = getvol(alsaelem);
         t0 = gettemperature("/sys/class/thermal/thermal_zone19", "temp");
+        if (t0[0] == '\0')
+                t0 = gettemperature("/sys/class/thermal/thermal_zone0", "temp");
         bat = getbattery("/sys/class/power_supply/BAT0");
         bat1 = getbattery("/sys/class/power_supply/BAT1");
         time = mktimes("%a %d %b %Y  %H:%M", zone);
